@@ -1,39 +1,27 @@
-import React, {Component, useState} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import MapView, {Marker} from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
-import {GOOGLE_MAPS_APIKEY} from '@env';
+import * as React from 'react';
+import {View, Text} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import Home from './src/Screens/Home';
+import Map from './src/Screens/Map';
+import ChooseLocation from './src/Screens/ChooseLocation';
 
-const App = () => {
-  const [coords, setCoords] = useState({
-    origin: {
-      latitude: 37.3318456,
-      longitude: -122.0296002,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    },
-    destination: {
-      latitude: 37.771707,
-      longitude: -122.4053769,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    },
-  });
+const Stack = createStackNavigator();
 
-  const {origin, destination} = coords;
-
+function App() {
   return (
-    <MapView style={StyleSheet.absoluteFill} initialRegion={origin}>
-      <Marker coordinate={origin} />
-      <Marker coordinate={destination} />
-      <MapViewDirections
-        origin={origin}
-        destination={destination}
-        apikey={GOOGLE_MAPS_APIKEY}
-        strokeWidth={5}
-      />
-    </MapView>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Home" component={Home} options={{title: 'Home'}} />
+        <Stack.Screen
+          name="ChooseLocation"
+          component={ChooseLocation}
+          options={{title: 'Choose a location'}}
+        />
+        <Stack.Screen name="Map" component={Map} options={{title: 'Welcome'}} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-};
+}
 
 export default App;
