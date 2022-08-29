@@ -1,40 +1,75 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {StyleSheet, Text, View, Dimensions} from 'react-native';
-import MapView, {Marker, AnimatedRegion} from 'react-native-maps';
+import MapView, {Marker} from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import {GOOGLE_MAPS_APIKEY} from '@env';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import {showError} from '../helper/Message';
+
+import {getCurrentLocation} from '../helper/CurrentLocation';
+import {locationPermission} from '../helper/Permission';
 
 const screen = Dimensions.get('window');
 const ASPECT_RATIO = screen.width / screen.height;
 const LATITUDE_DELTA = 0.04;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+const DEFAULT_LATITUDE = 37.3318456;
+const DEFAULT_LONGITUDE = -122.0296002;
+let initialLatitude, initialLongitude;
+
+const setInitialCoords = async () => {
+  const locationPermissionGranted = await locationPermission();
+  if (locationPermissionGranted) {
+    const {latitude, longitude} = await getCurrentLocation();
+    initialLatitude = latitude;
+    initialLongitude = longitude;
+  }
+};
+
+setInitialCoords();
 
 const Map = ({navigation}) => {
+  const mapRef = useRef();
+  console.log(initialLatitude, initialLongitude);
   const [directionsCoords, setDirectionsCoords] = useState({
-    originCoords: {
-      latitude: 37.3318456,
-      longitude: -122.0296002,
+    currentLocation: {
+      latitude: initialLatitude || DEFAULT_LATITUDE,
+      longitude: initialLongitude || DEFAULT_LONGITUDE,
     },
-    destinationCoords: {
-      latitude: 37.771707,
-      longitude: -122.4053769,
-    },
+    destinationCoords: {},
   });
 
-  const mapRef = useRef();
-  const {originCoords, destinationCoords} = directionsCoords;
+  const {currentLocation, destinationCoords} = directionsCoords;
+
+  const setLiveLocation = async () => {
+    const locPermissionGranted = await locationPermission();
+    if (locPermissionGranted) {
+      const {latitude, longitude} = await getCurrentLocation();
+      setDirectionsCoords(prevState => {
+        return {
+          ...prevState,
+          currentLocation: {
+            latitude,
+            longitude,
+          },
+        };
+      });
+    }
+  };
+
+  useEffect(() => {
+    setLiveLocation();
+  }, []);
 
   const fetchValues = data => {
-    setDirectionsCoords({
-      originCoords: {
-        latitude: data.originCoords.latitude,
-        longitude: data.originCoords.longitude,
-      },
-      destinationCoords: {
-        latitude: data.destinationCoords.latitude,
-        longitude: data.destinationCoords.longitude,
-      },
+    setDirectionsCoords(prevState => {
+      return {
+        ...prevState,
+        destinationCoords: {
+          latitude: data.destinationCoords.latitude,
+          longitude: data.destinationCoords.longitude,
+        },
+      };
     });
   };
 
@@ -49,40 +84,44 @@ const Map = ({navigation}) => {
           ref={mapRef}
           style={StyleSheet.absoluteFill}
           initialRegion={{
-            ...originCoords,
+            ...currentLocation,
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA,
           }}>
-          <Marker coordinate={originCoords} />
-          <Marker coordinate={destinationCoords} />
-          <MapViewDirections
-            origin={{
-              ...originCoords,
-              latitudeDelta: LATITUDE_DELTA,
-              longitudeDelta: LONGITUDE_DELTA,
-            }}
-            destination={{
-              ...destinationCoords,
-              latitudeDelta: LATITUDE_DELTA,
-              longitudeDelta: LONGITUDE_DELTA,
-            }}
-            apikey={GOOGLE_MAPS_APIKEY}
-            strokeWidth={3}
-            onReady={result => {
-              mapRef.current.fitToCoordinates(result.coordinates, {
-                edgePadding: {
-                  right: 30,
-                  bottom: 300,
-                  left: 30,
-                  top: 100,
-                },
-                animated: true,
-              });
-            }}
-            onError={errorMessage => {
-              console.log('Error');
-            }}
-          />
+          <Marker coordinate={currentLocation} />
+          {Object.keys(destinationCoords).length > 0 && (
+            <Marker coordinate={destinationCoords} />
+          )}
+          {Object.keys(destinationCoords).length > 0 && (
+            <MapViewDirections
+              origin={{
+                ...currentLocation,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA,
+              }}
+              destination={{
+                ...destinationCoords,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA,
+              }}
+              apikey={GOOGLE_MAPS_APIKEY}
+              strokeWidth={3}
+              onReady={result => {
+                mapRef.current.fitToCoordinates(result.coordinates, {
+                  edgePadding: {
+                    right: 30,
+                    bottom: 300,
+                    left: 30,
+                    top: 100,
+                  },
+                  animated: true,
+                });
+              }}
+              onError={errorMessage => {
+                showError(errorMessage);
+              }}
+            />
+          )}
         </MapView>
       </View>
       <View style={styles.bottomCard}>

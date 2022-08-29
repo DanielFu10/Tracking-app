@@ -5,35 +5,38 @@ import {LogBox} from 'react-native';
 
 import AddressPickup from '../components/AddressPickup';
 import CustomButton from '../components/CustomButton';
+import {showError, showSuccess} from '../helper/Message';
 
 const ChooseLocation = ({route, navigation}) => {
-  const [directionsCoords, setDirectionsCoords] = useState({
-    originCoords: {},
+  const [destination, setDestination] = useState({
     destinationCoords: {},
   });
 
-  const {originCoords, destinationCoords} = directionsCoords;
+  const {destinationCoords} = destination;
 
-  const onDone = () => {
-    const {getCoordinates} = route.params;
-    getCoordinates({
-      originCoords,
-      destinationCoords,
-    });
-    navigation.goBack();
+  const checkValid = () => {
+    if (Object.keys(destinationCoords).length === 0) {
+      showError('Please enter destination location');
+      return false;
+    }
+    return true;
   };
 
-  const fetchOriginCoords = coords => {
-    setDirectionsCoords(prevState => {
-      return {
-        ...prevState,
-        originCoords: coords,
-      };
-    });
+  const onDone = () => {
+    const isValid = checkValid();
+    if (isValid) {
+      const {getCoordinates} = route.params;
+      getCoordinates({
+        destinationCoords,
+      });
+      showSuccess('Directions calculated');
+      navigation.goBack();
+    }
   };
 
   const fetchDestinationCoords = coords => {
-    setDirectionsCoords(prevState => {
+    console.log(coords);
+    setDestination(prevState => {
       return {
         ...prevState,
         destinationCoords: coords,
@@ -45,19 +48,19 @@ const ChooseLocation = ({route, navigation}) => {
     LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
   }, []);
 
+  LogBox.ignoreLogs([
+    'Non-serializable values were found in the navigation state',
+  ]);
+
   return (
     <View style={styles.container}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         style={styles.adressContainer}>
+        <View style={styles.viewContainer} />
         <AddressPickup
           placeholderText={'Enter Destination Location'}
           fetchAddress={fetchDestinationCoords}
-        />
-        <View style={styles.viewContainer} />
-        <AddressPickup
-          placeholderText={'Enter Origin Location'}
-          fetchAddress={fetchOriginCoords}
         />
         <CustomButton
           btnText={'Done'}

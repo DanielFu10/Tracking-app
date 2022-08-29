@@ -5,6 +5,7 @@ import {GOOGLE_MAPS_APIKEY} from '@env';
 
 const AddressPickup = props => {
   const onPressAddress = (data, details) => {
+    console.log(data, details);
     const coords = {
       latitude: details.geometry.location.lat,
       longitude: details.geometry.location.lng,

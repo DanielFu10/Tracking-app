@@ -5,6 +5,8 @@ import Home from './src/Screens/Home';
 import Map from './src/Screens/Map';
 import ChooseLocation from './src/Screens/ChooseLocation';
 
+import FlashMessage from 'react-native-flash-message';
+
 const Stack = createStackNavigator();
 
 function App() {
@@ -19,6 +21,7 @@ function App() {
         />
         <Stack.Screen name="Map" component={Map} options={{title: 'Map'}} />
       </Stack.Navigator>
+      <FlashMessage position="top" />
     </NavigationContainer>
   );
 }
