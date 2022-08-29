@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {View, Text} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import Home from './src/Screens/Home';
@@ -18,7 +17,7 @@ function App() {
           component={ChooseLocation}
           options={{title: 'Choose a location'}}
         />
-        <Stack.Screen name="Map" component={Map} options={{title: 'Welcome'}} />
+        <Stack.Screen name="Map" component={Map} options={{title: 'Map'}} />
       </Stack.Navigator>
     </NavigationContainer>
   );
