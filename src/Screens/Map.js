@@ -30,7 +30,6 @@ setInitialCoords();
 
 const Map = ({navigation}) => {
   const mapRef = useRef();
-  console.log(initialLatitude, initialLongitude);
   const [directionsCoords, setDirectionsCoords] = useState({
     currentLocation: {
       latitude: initialLatitude || DEFAULT_LATITUDE,
@@ -41,10 +40,11 @@ const Map = ({navigation}) => {
 
   const {currentLocation, destinationCoords} = directionsCoords;
 
-  const setLiveLocation = async () => {
+  const getLiveLocation = async () => {
     const locPermissionGranted = await locationPermission();
     if (locPermissionGranted) {
       const {latitude, longitude} = await getCurrentLocation();
+      console.log('get live location after 5 seconds');
       setDirectionsCoords(prevState => {
         return {
           ...prevState,
@@ -58,7 +58,14 @@ const Map = ({navigation}) => {
   };
 
   useEffect(() => {
-    setLiveLocation();
+    getLiveLocation();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getLiveLocation();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchValues = data => {
@@ -88,9 +95,15 @@ const Map = ({navigation}) => {
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA,
           }}>
-          <Marker coordinate={currentLocation} />
+          <Marker
+            coordinate={currentLocation}
+            image={require('../assets/images/full-moon.png')}
+          />
           {Object.keys(destinationCoords).length > 0 && (
-            <Marker coordinate={destinationCoords} />
+            <Marker
+              coordinate={destinationCoords}
+              image={require('../assets/images/box.png')}
+            />
           )}
           {Object.keys(destinationCoords).length > 0 && (
             <MapViewDirections
@@ -106,16 +119,9 @@ const Map = ({navigation}) => {
               }}
               apikey={GOOGLE_MAPS_APIKEY}
               strokeWidth={3}
+              optimizeWaypoints={true}
               onReady={result => {
-                mapRef.current.fitToCoordinates(result.coordinates, {
-                  edgePadding: {
-                    right: 30,
-                    bottom: 300,
-                    left: 30,
-                    top: 100,
-                  },
-                  animated: true,
-                });
+                mapRef.current.fitToCoordinates(result.coordinates);
               }}
               onError={errorMessage => {
                 showError(errorMessage);
